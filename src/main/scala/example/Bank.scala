@@ -25,7 +25,7 @@ class Visitor(id: Int) extends Actor with ActorLogging {
       branch ! BalanceRequest(id)
     }
     case BalanceResponse(balance, clerkId) => {
-      log.info(s"User[$id] Received balance request from Clerk[${clerkId}]: $balance")
+      log.info(s"User[$id] Received balance request from Clerk[${clerkId}]: $balance €")
       context.stop(self)
     }
     case _ => log.info("Visitor does not undersrand response")
@@ -48,14 +48,14 @@ class BankClerk(id: Int) extends Actor {
 
 object Bank {
   def main(args: Array[String]): Unit = {
-    val system                    = ActorSystem("Bank-Office-System")
+    val system                    = ActorSystem("Bank")
     implicit val timeout          = Timeout(5, TimeUnit.MINUTES)
 
     val visitorsAppontments = (1 to 10)
 
     val visitorsFutures = visitorsAppontments.map(id => {
-      val bankClerkActor = system.actorOf(Props(new BankClerk(id)).withDispatcher("clerks-thread-pool"), s"clerk-${id}")
-      val visitorActor = system.actorOf(Props(new Visitor(id)).withDispatcher("branch-thread-pool"), s"visitor-${id}")
+      val bankClerkActor = system.actorOf(Props(new BankClerk(id)).withDispatcher("clerks"), s"clerk-${id}")
+      val visitorActor = system.actorOf(Props(new Visitor(id)).withDispatcher("branch"), s"visitor-${id}")
       (visitorActor ? StartAppointment(bankClerkActor, id)).mapTo[String]
     })
 
