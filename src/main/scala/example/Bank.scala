@@ -13,6 +13,7 @@ import scala.concurrent.duration._
 import akka.util.Timeout
 import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 
 case class StartAppointment(branch: ActorRef, clerkId: Int)
 case class BalanceRequest(visitorId: Int)
@@ -38,7 +39,7 @@ class BankClerk(id: Int) extends Actor {
   def receive = {
     case BalanceRequest(visitorNumber) => {
       log.info(s"Clerk[$id] received balance request from User[$visitorNumber]")
-      Thread.sleep(3000)
+      Thread.sleep(2000)
       log.info(s"Clerk[$id] processed balance request for User[$visitorNumber]")
       sender() ! BalanceResponse(r.nextInt(), id)
     }
@@ -55,7 +56,7 @@ object Bank {
 
     val visitorsFutures = visitorsAppontments.map(id => {
       val bankClerkActor = system.actorOf(Props(new BankClerk(id)).withDispatcher("clerks"), s"clerk-${id}")
-      val visitorActor = system.actorOf(Props(new Visitor(id)).withDispatcher("branch"), s"visitor-${id}")
+      val visitorActor = system.actorOf(Props(new Visitor(id)).withDispatcher("visitors"), s"visitor-${id}")
       (visitorActor ? StartAppointment(bankClerkActor, id)).mapTo[String]
     })
 
